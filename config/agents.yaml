@@ -1,0 +1,55 @@
+# What the three agents may do, when, and how much of it waits for a person.
+# Loaded by src/csagents/config.py. Changing a number here changes behaviour; no code edits needed.
+
+launch:
+  date: 2026-02-02
+  shadow_days: 7                # the first week only logs what the agents would have done
+
+health:
+  weights_file: health_weights.yaml
+  tiers: {green: 60, yellow: 45}   # score >= 60 is green, >= 45 yellow, below that red
+  ticket_window_days: 90
+  usage_weeks: 4
+
+renewals:
+  open_days_before: 120         # renewal deal created this many days before contract end
+
+expansion:
+  seat_utilization_above: 0.90
+  weeks: 3
+
+followups:
+  usage_drop_fraction: 0.33     # weekly active users down by a third against the prior four-week average
+  no_contact_days: 45
+  onboarding_days_after_go_live: [7, 30, 60]
+  ticket_followup_priority: HIGH
+  checkin_cooldown_days: 21     # at most one check-in per account in this window
+  text_window_days: 30          # inbound email and ticket text the model reads
+
+qbr:
+  min_arr: 15000
+  prepare_days_before: 7
+  max_attempts: 2               # one regeneration, then the draft goes to the CSM flagged
+
+approval:
+  arr_threshold: 40000          # anything customer-facing above this ARR always waits for the CSM
+  graduation:
+    window: 50                  # the last 50 decisions on this action type
+    max_edit_rate: 0.05         # under 5% edited or rejected, and it runs on its own
+
+# autonomy: act (run and log), approve (Slack approval first) or never.
+# graduates: the action can move from approve to act on the graduation rule above.
+# customer_facing: the ARR threshold and the billing preconditions apply.
+actions:
+  create_renewal_deal:      {autonomy: act}
+  update_renewal_risk:      {autonomy: act}
+  open_recovery_task:       {autonomy: act}
+  create_expansion_task:    {autonomy: act}
+  escalate_to_csm:          {autonomy: act}
+  send_checkin:             {autonomy: approve, graduates: true, customer_facing: true}
+  send_onboarding_reminder: {autonomy: approve, graduates: true, customer_facing: true}
+  send_ticket_followup:     {autonomy: approve, graduates: true, customer_facing: true}
+  prepare_qbr:              {autonomy: approve}
+  change_deal_amount:       {autonomy: approve, human_field: amount}
+  apply_discount:           {autonomy: never}
+  cancel_subscription:      {autonomy: never}

@@ -1,0 +1,18 @@
+# Points per signal, from `csagents fit-weights --write`: a logistic regression of renewal on the
+# four signals over the renewal history before the last six months, rescaled to 100 and rounded to
+# fives. held_out_auc is measured on the last six months of renewals.
+points:
+  seat_utilization: 50
+  module_adoption: 30
+  ticket_ok: 10
+  invoice_current: 10
+coefficients:
+  seat_utilization: 2.612
+  module_adoption: 1.712
+  ticket_ok: 0.664
+  invoice_current: 0.486
+trained_on: 1172
+held_out: 628
+held_out_churned: 49
+held_out_auc: 0.824
+held_out_auc_unrounded: 0.827

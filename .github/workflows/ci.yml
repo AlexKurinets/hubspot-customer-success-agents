@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: cs
+          POSTGRES_PASSWORD: cs
+          POSTGRES_DB: cs_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cs -d cs_test"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      TEST_DATABASE_URL: postgresql://cs:cs@localhost:5432/cs_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dashboard,dev]"
+      - run: ruff check src tests dashboard
+      - run: pytest
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build, seed and start the stack
+        run: docker compose up -d --build --wait --wait-timeout 1500
+      - name: Smoke test every documented command
+        run: bash scripts/smoke.sh
+      - if: failure()
+        run: docker compose logs --tail 200
+      - if: always()
+        run: docker compose down -v
